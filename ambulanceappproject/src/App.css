@@ -1,0 +1,107 @@
+.secondFull-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.full-BtnContent{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  padding-bottom: 0px;
+
+}
+
+.driveBtnContent{
+  margin: 60px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  text-align: center;
+}
+
+.btnDrive{
+  text-align: center;
+  /* outline: 0.5px; */
+  border-radius: 15px;
+  border: 1px solid black;
+  width: 120px;
+  height: 50px;
+  background-color: rgb(250, 253, 255) ;
+  color: rgb(0, 126, 236) ;
+  cursor:pointer;
+}
+
+
+.search-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  margin-right: 10px;
+}
+
+.search-button {
+  background-color: rgb(0, 126, 236);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.search-button:hover {
+  background-color: rgb(39, 44, 49);
+}
+
+.search-button:focus {
+  outline: none;
+}
+
+.searchInput {
+  width: 300px;
+  max-width: 300px;
+}
+
+
+
+
+@media screen and (max-width: 420px){
+  
+.secondFull-content{
+
+}
+.full-BtnContent{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 20px;
+  padding-bottom: 0px;
+}
+
+.driveBtnContent{
+  margin: 10px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+  text-align: center;
+}
+
+.btnDrive{
+  text-align: center;
+  /* outline: 0.5px; */
+  border-radius: 15px;
+  border: 1px solid black;
+  width: 120px;
+  height: 40px;
+  background-color: rgb(250, 253, 255);
+
+}
+
+.searchInput {
+  width: 200px;
+  max-width: 200px;
+}
+}
