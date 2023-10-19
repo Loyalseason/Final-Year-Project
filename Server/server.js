@@ -1,26 +1,81 @@
+const fs = require('fs');
 const express = require('express');
-const port = 5000;
+const http = require('http'); // Import the http module
+const socketIO = require('socket.io'); // Import the socket.io library
 const cors = require('cors');
 const app = express();
 
 app.use(cors());
 app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const apiKey = 'AIzaSyAN7P8ZpjtpK2ZxDjgWbGwTgc5Mz-aRIe4';
+const apiKey = 'AIzaSyBvVTA0zQ8dk8R95SaZkxvKOffz4zCYvrI';
+const usersFile = 'C:/Users/Loyal_Season/Documents/Documents/Study/Ghana Telecom BIT Course/BIT level 400 SEM 1/Project Work/Project Work Build/Final-Year-Project/Server/users.json';
 
-// Store user data in an array
-const users = [
-  { email: 'user1@example.com', password: 'password1' },
-  { email: 'user2@example.com', password: 'password2' },
-];
+let users = [];
+let esp32Data = null;
+let tempBoardData = null;
 
-// Store user connections in an array
-const userConnections = [];
+// Load users from the JSON file
+fs.readFile(usersFile, 'utf8', (err, data) => {
+  if (err) {
+    console.error('Error reading users file:', err);
+  } else {
+    try {
+      const parsedData = JSON.parse(data);
+      if (Array.isArray(parsedData.users)) {
+        users = parsedData.users;
+      } else {
+        throw new Error('Invalid users data');
+      }
+    } catch (error) {
+      console.error('Error parsing users file:', error);
+    }
+  }
+});
+
 
 // API endpoint to get the API key
 app.get('/apiKey', (req, res) => {
   res.send(apiKey);
 });
+
+
+const delay = async (ms) =>
+  new Promise(resolve => setTimeout(resolve, ms))
+
+async function sendData(res)
+{
+  while (1){
+    if (tempBoardData === null)
+    {
+      res.send("");
+      await delay(1000);
+      await sendData(res)
+    }
+    else
+    {  
+      res.send(tempBoardData);
+      tempBoardData = null;
+      break;
+    }
+  }
+}
+
+// Sent board data
+app.get('/getBoardData', async (req, res) => {
+  console.log("inside get Board Data");
+  
+  while (tempBoardData === null) {
+    res.write("");
+    await delay(1000);
+  }
+
+  res.end(JSON.stringify(tempBoardData));
+  tempBoardData = null;
+});
+
 
 // API endpoint to get user data
 app.get('/api', (req, res) => {
@@ -46,36 +101,69 @@ app.get('/geolocation', async (req, res) => {
   }
 });
 
-// Socket.IO configuration
-const server = app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running on port ${port}`);
+app.post('/signUp', (req, res) => {
+  try {
+    const {firstName, lastName, email, password } = req.body;
+
+    // Create a new user object
+    const newUser = { firstName, lastName, email, password };
+
+    // Add the new user to the array
+    users.push(newUser);
+
+    // Write the updated users array back to the JSON file
+    fs.writeFile(usersFile, JSON.stringify({ users }), 'utf8', (err) => {
+      if (err) {
+        console.error('Error writing to users file:', err);
+        return res.status(500).json({ error: 'Failed to sign up' });
+      }
+
+      console.log('User added successfully');
+
+      // Send a success response
+      return res.status(200).json({ message: 'User signed up successfully' });
+    });
+  } catch (error) {
+    console.error('Error signing up:', error);
+    return res.status(500).json({ error: 'Failed to sign up' });
+  }
 });
 
-const io = require('socket.io')(server);
 
+// POST endpoint handling
+app.post('/api/messages', (req, res) => { // Modify the route path to '/' or any other desired path
+  tempBoardData = esp32Data = req.body;
+  console.log('Received POST request with payload:', req.body);
+  // Process the payload as needed
+
+  // Send a response
+  res.json({ message: 'POST request received successfully.' });
+});
+
+// Create an HTTP server
+const server = http.createServer(app);
+
+// Attach Socket.IO to the HTTP server
+const io = socketIO(server);
+
+// Socket.IO configuration
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
 
-  // Store the socket connection in userConnections array
-  userConnections.push(socket);
-
   // Handle user-specific events
   socket.on('userEvent', (data) => {
-    // Handle user-specific event here
     console.log('User event:', data);
-
-    // Emit the event to other clients
     socket.broadcast.emit('userEvent', data);
   });
 
   // Handle disconnect event
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
-
-    // Remove the socket connection from userConnections array
-    const index = userConnections.indexOf(socket);
-    if (index !== -1) {
-      userConnections.splice(index, 1);
-    }
   });
+});
+
+// Start the HTTP server
+const port = 5000;
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}`);
 });

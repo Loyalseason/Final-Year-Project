@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, {useState} from 'react';
+import '../App.css'; 
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -13,6 +14,9 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
+
+
+
 function Copyright(props) {
   return (
     <Typography variant="body2" color="text.secondary" align="center" {...props}>
@@ -27,46 +31,49 @@ function Copyright(props) {
 }
 
 
-
-
-
 export default function Login() {
  
  
   const navigate = useNavigate();
   const theme = createTheme();
+  const [loggedInUserName, setLoggedInUserName] = useState(null); // State to store the logged-in user's name
 
   const handleSubmit = (event) => {
     event.preventDefault();
-     const userData = new FormData(event.currentTarget);
-
-    //  fetch('http://172.20.10.4:5000/api')
-    // .then(response => {
-    //   console.log(response.json())
-    //   response.json()})
-    // .then(data => {
-      fetch('http://172.20.10.4:5000/api')
-      .then(response => response.json())
-      .then(data => {
-        let found = false;
-        for (let i = 0; i < data.length; i++) {
-          if (userData.get('email') === data[i].email && userData.get('password') === data[i].password) {
-            found = true;
-            break;
+    const userData = new FormData(event.currentTarget);
+    fetch('http://172.20.10.6:5000/api')
+      .then((response) => response.json())
+      .then((data) => {
+        // console.log(data);
+        if (Array.isArray(data)) {
+          let found = false;
+          for (let i = 0; i < data.length; i++) {
+            if (
+              data[i].email === userData.get('email') &&
+              data[i].password === userData.get('password')
+            ) {
+              found = true;
+              const loggedInUserFirstName = data[i].firstName;
+              setLoggedInUserName(loggedInUserFirstName);
+              navigate('/map', { state: { loggedInUserName: loggedInUserFirstName } });
+              break;
+            }
           }
-        }
-         
-        if (found) {
-          console.log('Hello Here')
-          navigate('/map');
+          if (!found) {
+            alert('Invalid Input');
+          }
         } else {
-          alert('Invalid Input');
+          console.log('Invalid response format:', data);
+          alert('Invalid response format');
         }
       })
-     .catch(error => {
-      console.log(error);
-    });
-};
+      .catch((error) => {
+        console.log('Error:', error);
+        alert('An error occurred while fetching the data');
+      });
+  };
+  
+  
 
    return (
     <ThemeProvider theme={theme}>
@@ -150,7 +157,7 @@ export default function Login() {
                   </Link>
                 </Grid>
                 <Grid item>
-                <Link onClick={() => navigate('/signup')} variant="body2">
+                <Link onClick={() => navigate('/signup')}  className="link" variant="body2">
                 {"Don't have an account? Sign Up"} 
                 </Link>
 

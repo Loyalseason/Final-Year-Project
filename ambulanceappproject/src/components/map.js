@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { Dialog, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 import DirectionsCarFilledRoundedIcon from '@mui/icons-material/DirectionsCarFilledRounded';
 import MyLocationRoundedIcon from '@mui/icons-material/MyLocationRounded';
 import RoomRoundedIcon from '@mui/icons-material/RoomRounded';
-import { Typography, Link, TextField } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Loader } from '@googlemaps/js-api-loader';
 import '../App.css';
 
 function Map({ apiKey }) {
@@ -12,6 +15,16 @@ function Map({ apiKey }) {
   const [position, setPosition] = useState(null);
   const [searchMarker, setSearchMarker] = useState(null);
   const [directionsRenderer, setDirectionsRenderer] = useState(null);
+  const location = useLocation();
+  const { loggedInUserName } = location.state || {};
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [fetchedData, setFetchedData] = useState('');
+  const [isLoaded, setIsLoaded] = useState(false); // Loading state
+  const navigate = useNavigate();
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const [availableUsers, setAvailableUsers] = useState([]);
+
 
   useEffect(() => {
     const loader = new Loader({
@@ -28,53 +41,87 @@ function Map({ apiKey }) {
       setMap(map);
       setInfoWindow(new google.maps.InfoWindow());
       setDirectionsRenderer(new google.maps.DirectionsRenderer());
-
-      // Get user's location and set it as the center of the map
-      const geolocate = async () => {
-        try {
-          const response = await fetch('http://172.20.10.4:5000/geolocation', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-          const data = await response.json();
-          const { lat, lng } = data;
-          const userLocation = new google.maps.LatLng(lat, lng);
-          map.setCenter(userLocation);
-          const userMarker = new google.maps.Marker({
-            position: userLocation,
-            map: map,
-            icon: {
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: 'blue',
-              fillOpacity: 0.7,
-              strokeColor: 'white',
-              strokeWeight: 1,
-              scale: 10,
-            },
-          });
-          // Recenter the map to the user's location on button click
-          const locationBtn = document.querySelector('.location-btn');
-          locationBtn.addEventListener('click', () => {
-            map.setCenter(userLocation);
-          });
-
-          setPosition({ coords: { latitude: lat, longitude: lng } });
-        } catch (error) {
-          console.error(error);
-        }
-      };
-
-      geolocate();
+  
+ // Get user's location and set it as the center of the map
+ const geolocate = async () => {
+        
+  try {
+    const response = await fetch('http://172.20.10.6:5000/geolocation', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
-  }, [apiKey]);
+    const data = await response.json();
+    const { lat, lng } = data;
+    const userLocation = new google.maps.LatLng(lat, lng);
+    map.setCenter(userLocation);
+    const userMarker = new google.maps.Marker({
+      position: userLocation,
+      map: map,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: 'rgb(0, 126, 236) ',
+        fillOpacity: 0.98,
+        strokeColor: 'white',
+        strokeWeight: 1,
+        scale: 10,
+      },
+    });
+    // Recenter the map to the user's location on button click
+    const locationBtn = document.querySelector('.location-btn');
+    locationBtn.addEventListener('click', () => {
+      map.setCenter(userLocation);
+    });
 
-  const handleSearch = async (event) => {
-    event.preventDefault();
-    const searchQuery = event.target.elements.search.value;
+    setPosition({ coords: { latitude: lat, longitude: lng } });
+  } catch (error) {
+    console.error(error);
+  }
+};
 
-    if (searchQuery) {
+geolocate();
+});
+}, [apiKey]);
+  
+
+const handleSearch = async (event) => {
+  event.preventDefault();
+  const searchQuery = searchInputValue;
+
+  if (searchQuery) {
+    const latLngPattern = /^([-+]?\d+(\.\d+)?),\s*([-+]?\d+(\.\d+)?)$/; // Regular expression for latitude and longitude
+
+    if (latLngPattern.test(searchQuery)) {
+      // If the input matches latitude and longitude format
+      const [lat, lng] = searchQuery.split(',').map((str) => parseFloat(str.trim()));
+
+      if (!isNaN(lat) && !isNaN(lng)) {
+        const google = window.google;
+        const searchedLocation = new google.maps.LatLng(lat, lng);
+        map.setCenter(searchedLocation);
+
+        // Remove previous search marker if it exists
+        if (searchMarker) {
+          searchMarker.setMap(null);
+        }
+
+        const marker = new google.maps.Marker({
+          position: searchedLocation,
+          map: map,
+          icon: {
+            url: RoomRoundedIcon,
+            anchor: new google.maps.Point(15, 30),
+            scaledSize: new google.maps.Size(30, 30),
+          },
+        });
+
+        setSearchMarker(marker);
+      } else {
+        // Handle invalid latitude and longitude format
+        console.error('Invalid latitude and longitude format:', searchQuery);
+      }
+    } else {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -112,7 +159,9 @@ function Map({ apiKey }) {
         console.error(error);
       }
     }
-  };
+  }
+};
+
 
   const handleDrive = () => {
     if (position && searchMarker) {
@@ -144,17 +193,128 @@ function Map({ apiKey }) {
     }
   };
 
+
+  async function esp32Data() {
+    try {
+      let response = await fetch('http://172.20.10.6:5000/getBoardData');
+      let data = await response.text();
+      console.log('Received data:', data); // Add this line
+      setFetchedData(data);
+      setDialogOpen(true);
+      setIsLoaded(true); // Set isLoaded to true when data is fetched
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
+
+
+    // Function to send a request to the first available user
+    const sendRequestToAvailableUser = (requestData) => {
+      if (availableUsers.length > 0) {
+        const nextUser = availableUsers[0]; // Get the first available user
+        // You can implement the logic to send the request to nextUser on the backend
+        // Update the user's availability status when the request is sent
+        // Handle user acceptance or rejection of the request
+        console.log(`Sending request to ${nextUser}`);
+      } else {
+        // Handle the case when no available users are found
+        console.log('No available users to send requests to.');
+      }
+    };
+  
+    // Function to add a user to the list of available users
+    const addUserToAvailableList = (username) => {
+      setAvailableUsers([...availableUsers, username]);
+    };
+  
+    // Function to remove a user from the list of available users
+    const removeUserFromAvailableList = (username) => {
+      const updatedUsers = availableUsers.filter((user) => user !== username);
+      setAvailableUsers(updatedUsers);
+    };
+
+
+const handleAccept = () => {
+  // Perform actions when user accepts the data
+  setDialogOpen(false);
+  removeUserFromAvailableList(loggedInUserName); // Remove the user from the available list
+
+  // Define your request data here
+  const requestData = {
+    // Define the properties of your request data
+    // For example:
+    requestType: 'SomeType',
+    message: 'This is a request message',
+    // ... other properties
+  };
+
+  sendRequestToAvailableUser(requestData); // Send the request to the next available user
+};
+
+
+
+const handleDecline = () => {
+  // Perform actions when user declines the data
+  setDialogOpen(false);
+};
+
+
+
+// Refresh
+
+useEffect(() => {
+
+  esp32Data();
+
+  // Set up an interval to refresh the data every 30 seconds
+  const refreshInterval = setInterval(() => {
+    esp32Data();
+  }, 10 * 1000);
+
+  // Clean up the interval when the component unmounts or when the useEffect dependencies change
+  return () => {
+    clearInterval(refreshInterval);
+  };
+}, [refreshCounter]);
+
+
+
+//log-out
+const handleLogout = () => {
+  // Perform any logout logic you need here
+   
+  // Navigate the user to the sign-in page using the navigate function
+  navigate('/'); // Change '/signin' to the actual route of your sign-in page
+};
+
+const clearDirectionsAndSearch = () => {
+  if (directionsRenderer) {
+    directionsRenderer.setMap(null); // Clear directions from the map
+  }
+  if (searchMarker) {
+    searchMarker.setMap(null); // Clear the search marker from the map
+  }
+  setSearchInputValue(''); // Clear the search input value
+}
+
+
   return (
     <div className="full-content">
       <div id="map" style={{ width: '100%', height: '550px' }}></div>
 
+      <h2 className="usersName">Welcome, <span>{loggedInUserName}</span></h2>
+
       <form onSubmit={handleSearch}>
         <div className="search-area">
           <div className="search-bar">
-            <TextField id="search" label="Search" variant="outlined" size="small" className="searchInput" />
+            <TextField id="search" label="Search" variant="outlined" size="small" className="searchInput"   value={searchInputValue}
+  onChange={(event) => setSearchInputValue(event.target.value)} />
           </div>
           <button type="submit" className="search-button">
             Search
+          </button>
+          <button onClick={clearDirectionsAndSearch} className="search-button">
+            Clear
           </button>
         </div>
       </form>
@@ -173,62 +333,47 @@ function Map({ apiKey }) {
           </button>
           <h3>Drive</h3>
         </div>
+
+        <div className="driveBtnContent">
+          <button className="btnDrive" onClick={handleLogout}>
+            <LogoutIcon />
+          </button>
+          <h3>Log Out</h3>
+        </div>
+
       </div>
+      {isLoaded && (
+  <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+    <DialogContent>
+      <h2>EMERGENCY</h2>
+      <div>
+        {Object.entries(JSON.parse(fetchedData)).map(([key, value], index) => (
+          <div key={index}>
+            <strong>{key}:</strong> {value}
+          </div>
+        ))}
+      </div>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={handleAccept} color="primary">
+        Accept
+      </Button>
+      <Button onClick={handleDecline} color="secondary">
+        Decline
+      </Button>
+    </DialogActions>
+  </Dialog>
+)}
+
+
+
+
+
+
     </div>
   );
+
+
 }
 
-export default Map;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { useState, useEffect } from 'react';
-
-// function Map() {
-//   const [position, setPosition] = useState(null);
-
-//   useEffect(() => {
-//     navigator.geolocation.getCurrentPosition(
-//       (position) => {
-//         setPosition(position);
-//       },
-//       (error) => {
-//         console.error(error);
-//       }
-//     );
-//   }, []);
-
-//   useEffect(() => {
-//     if (position) {
-//       console.log(position.coords.latitude, position.coords.longitude);
-//     }
-//   }, [position]);
-
-//   return (
-//     <div>
-//       <p>Current Latitude: {position?.coords.latitude}</p>
-//       <p>Current Longitude: {position?.coords.longitude}</p>
-//     </div>
-//   );
-// }
-
-// export default Map;
+export default Map

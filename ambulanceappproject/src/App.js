@@ -7,19 +7,19 @@ import Map from './components/map';
 
 function App() {
   const [apiKey, setApiKey] = useState('');
-
+  const [loggedInUserName, setLoggedInUserName] = useState(null);
   async function fetchData() {
     try {
-      const response = await fetch('http://172.20.10.4:5000/apiKey');
+      const response = await fetch('http://172.20.10.6:5000/apiKey');
       const data = await response.text();
       setApiKey(data); // Assign the fetched data to the apiKey state
     } catch (error) {
       console.log('Error:', error);
     }
   }
-
+  
   useEffect(() => {
-    fetchData(); // Call the fetchData function when the component mounts
+     fetchData(); // Call the fetchData function when the component mounts
   }, []);
 
   return (
@@ -27,8 +27,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/SignUp" element={<SignUp />} />
-          <Route path="/Map"element={apiKey ? <Map apiKey={apiKey} /> : null} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/map" element={apiKey ? <Map apiKey={apiKey} loggedInUserName={loggedInUserName} /> : null} />
         </Routes>
       </Router>
     </React.StrictMode>
