@@ -37,7 +37,7 @@ export default function SignUp() {
       password,
     };
     // Sign up the new user
-    fetch('http://172.20.10.5:5000/signUp', {
+    fetch('http://172.20.10.6:5000/signUp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

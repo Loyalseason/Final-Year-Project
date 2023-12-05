@@ -10,7 +10,7 @@ app.use(express.static('public'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const apiKey = 'AIzaSyBvVTA0zQ8dk8R95SaZkxvKOffz4zCYvrI';
+const apiKey = 'AIzaSyBge9Lel6FquZXWGwfxU4OP6Ipe354gx7w';
 const usersFile = 'C:/Users/Loyal_Season/Documents/Documents/Study/Ghana Telecom BIT Course/BIT level 400 SEM 1/Project Work/Project Work Build/Final-Year-Project/Server/users.json';
 
 let users = [];
