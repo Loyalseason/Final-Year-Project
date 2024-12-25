@@ -41,7 +41,7 @@ export default function Login() {
   const handleSubmit = (event) => {
     event.preventDefault();
     const userData = new FormData(event.currentTarget);
-    fetch('http://172.20.10.6:5000/api')
+    fetch('http://localhost:5000/api')
       .then((response) => response.json())
       .then((data) => {
         // console.log(data);
