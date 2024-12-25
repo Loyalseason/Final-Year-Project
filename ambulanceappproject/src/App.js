@@ -10,7 +10,7 @@ function App() {
   const [loggedInUserName, setLoggedInUserName] = useState(null);
   async function fetchData() {
     try {
-      const response = await fetch('http://172.20.10.6:5000/apiKey');
+      const response = await fetch('http://localhost:5000/apiKey');
       const data = await response.text();
       setApiKey(data); // Assign the fetched data to the apiKey state
     } catch (error) {

@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const apiKey = 'APIKEY';
-const usersFile = 'C:/Users/Loyal_Season/Documents/Documents/Study/Ghana Telecom BIT Course/BIT level 400 SEM 1/Project Work/Project Work Build/Final-Year-Project/Server/users.json';
+const usersFile = './users.json';
 
 let users = [];
 let esp32Data = null;

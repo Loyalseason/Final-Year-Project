@@ -46,7 +46,7 @@ function Map({ apiKey }) {
  const geolocate = async () => {
         
   try {
-    const response = await fetch('http://172.20.10.6:5000/geolocation', {
+    const response = await fetch('http://localhost:5000/geolocation', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ const handleSearch = async (event) => {
 
   async function esp32Data() {
     try {
-      let response = await fetch('http://172.20.10.6:5000/getBoardData');
+      let response = await fetch('http://localhost:5000/getBoardData');
       let data = await response.text();
       console.log('Received data:', data); // Add this line
       setFetchedData(data);
